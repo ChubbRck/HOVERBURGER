@@ -4,7 +4,11 @@ __lua__
 --hoverburger
 --presented by robysoft
 
+
+-- globals
 state = 2
+death_timer = 0 
+
 p = {
 	accel = {x = .01, y = 0},
 	x = 64, 
@@ -49,6 +53,9 @@ end
 function _update()
 	if state == 1 then
 	-- title screen
+		if btn(2) then
+			state = 2
+		end
 
 	elseif state == 2 then
 		-- game state
@@ -57,6 +64,7 @@ function _update()
 		check_zones()
 		updatespaceram()
 		updatecamera()
+		check_for_death()
 		log = p.vel.x
 	
 	elseif state == 3 then
@@ -67,8 +75,7 @@ end
 function _draw()
 
 	if state == 1 then
-
-
+		cls()
 	end
 
 	if state == 2 then
@@ -82,11 +89,17 @@ function _draw()
 		-- print(sget(p.x,p.y))
 		-- print(fget(47))
 	end
+
+	if state == 3 then
+		cls()
+		cursor(0,0)
+		print ("game over")
+	end
 	
 	if log then
-	cursor(p.x,20)
-	color(7)
-	print(log)
+		cursor(p.x,20)
+		color(7)
+		print(log)
 	end
 end
 
@@ -97,6 +110,50 @@ function drawplayer()
 
 	end
 end
+
+function check_for_death()
+
+	if death_timer > 90 then
+		reset_variables()
+		if (p.lives < 0) then
+			state = 3
+		else 
+			state = 1
+		end
+	end
+end
+
+
+function reset_variables()
+
+	death_timer = 0
+	--reset player vars
+	p.accel = {x = .01, y = 0}
+	p.x = 64
+	p.y = 64
+	p.baseaccel = .1 -- was .1
+	p.vel = {x = 0, y = 0}
+	p.bounce = 0.4 
+	p.score = 0
+	p.maxvel = {x = 4, y = 1} -- was 2
+	p.rot = 0
+	p.fuel = 100
+	p.fueldepleterate = .03
+	p.health = 50
+	p.dead = false
+	p.atgoal = false
+	-- reset space ram vars
+	spaceram.x = -80
+	spaceram.y = 64
+	spaceram.timer = 0
+	spaceram.vel = {x = 0, y = 0}
+	spaceram.accel = {x = .015, y = 0}
+	spaceram.timer = 0
+	spaceram.maxvel = {x =2.5, y = 0}
+
+	updatecamera()
+end
+
 function checkinput()
 	
 	if btn(2) then
@@ -146,6 +203,9 @@ function updateplayer()
 		end
 		checkcollisions()
 		enforceboundaries()
+	else
+		death_timer += 1 
+
 	end
 	
 end
@@ -181,6 +241,7 @@ function checkcollisions()
  	local dist = p.x - spaceram.x
  	if dist <= 30 then
  		p.dead = true
+ 		p.lives -= 1
  	end
 end
 
