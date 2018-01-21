@@ -4,9 +4,9 @@ __lua__
 --hoverburger
 --presented by robysoft
 
-state = 1
+state = 2
 p = {
-	accel = {x = .02, y = 0},
+	accel = {x = .01, y = 0},
 	x = 64, 
 	y = 64,
 	lives = 3,
@@ -14,7 +14,7 @@ p = {
 	vel = {x = 0, y = 0},
 	bounce = 0.4 ,
 	score = 0,
-	maxvel = {x = 3.5, y = 1}, -- was 2
+	maxvel = {x = 4, y = 1}, -- was 2
 	rot = 0,
 	fuel = 100,
 	fueldepleterate = .03,
@@ -24,10 +24,13 @@ p = {
 }
 
 spaceram = {
-x = 0,
-y = 64,
-vel = {x = 1, y = 0},
-accel = {x = 0, y = 0},
+	x = -80,
+	y = 64,
+	timer = 0,
+	vel = {x = 0, y = 0},
+	accel = {x = .015, y = 0},
+	timer = 0,
+	maxvel = {x =2.5, y = 0}
 }
 
 zones = {}
@@ -39,8 +42,8 @@ level_1 = {
 gravity = .04
 
 function _init()
-	create_zone(-1,2,10,64,20)
-	create_zone(-1,3,10,64,10)
+	-- create_zone(-1,2,10,64,20)
+	-- create_zone(-1,3,10,64,10)
 end
 
 function _update()
@@ -62,16 +65,23 @@ function _update()
 end
 
 function _draw()
-	cls()
-	drawbg()
-	foreach(zones, draw_zone)
-	spr(34, p.x, p.y)
-	drawspaceram()
-	-- 	cursor(p.x+10,p.y)
-	-- color(6)
-	-- print(sget(p.x,p.y))
-	-- print(fget(47))
 
+	if state == 1 then
+
+
+	end
+
+	if state == 2 then
+		cls()
+		drawbg()
+		foreach(zones, draw_zone)
+		drawplayer()
+		drawspaceram()
+		-- 	cursor(p.x+10,p.y)
+		-- color(6)
+		-- print(sget(p.x,p.y))
+		-- print(fget(47))
+	end
 	
 	if log then
 	cursor(p.x,20)
@@ -80,6 +90,13 @@ function _draw()
 	end
 end
 
+function drawplayer()
+	if not p.dead then
+		spr(34, p.x, p.y)
+	else 
+
+	end
+end
 function checkinput()
 	
 	if btn(2) then
@@ -97,32 +114,39 @@ function checkinput()
 end
 
 function updatespaceram()
-
+	spaceram.vel.x += spaceram.accel.x
 	spaceram.x += spaceram.vel.x
+	if (spaceram.vel.x > spaceram.maxvel.x) then
+		spaceram.vel.x = spaceram.maxvel.x
+	end
+	spaceram.timer = (spaceram.timer + 1) % 60
 end
 
 function updateplayer()
-	p.vel.y += p.accel.y
-	p.vel.x += p.accel.x
-	
-	p.y += p.vel.y
-	p.x += p.vel.x
-	
-	p.vel.y += gravity
-	
-	if (p.vel.y > p.maxvel.y) then
-		p.vel.y = p.maxvel.y
-	end
 
-	if (p.vel.y < -1 * p.maxvel.y) then
-		p.vel.y = -1 * p.maxvel.y
-	end	
-	
-	if (p.vel.x > p.maxvel.x) then
-		p.vel.x -= p.accel.x * 2
+	if not p.dead then
+		p.vel.y += p.accel.y
+		p.vel.x += p.accel.x
+		
+		p.y += p.vel.y
+		p.x += p.vel.x
+		
+		p.vel.y += gravity
+		
+		if (p.vel.y > p.maxvel.y) then
+			p.vel.y = p.maxvel.y
+		end
+
+		if (p.vel.y < -1 * p.maxvel.y) then
+			p.vel.y = -1 * p.maxvel.y
+		end	
+		
+		if (p.vel.x > p.maxvel.x) then
+			p.vel.x -= p.accel.x * 2
+		end
+		checkcollisions()
+		enforceboundaries()
 	end
-	checkcollisions()
-	enforceboundaries()
 	
 end
 
@@ -155,8 +179,8 @@ function checkcollisions()
 
  	-- check for collision with space ram
  	local dist = p.x - spaceram.x
- 	if dist <= -5 then
- 		loselife()
+ 	if dist <= 30 then
+ 		p.dead = true
  	end
 end
 
@@ -178,7 +202,13 @@ function enforceboundaries()
 end
 
 function drawspaceram()
- spr(66, spaceram.x, spaceram.y, 2, 2)
+ --spr(66, spaceram.x, spaceram.y, 2, 2)
+if spaceram.timer >= 30 then
+ 	sspr(16,32,16,16,spaceram.x-32,spaceram.y-32, 64, 64)
+ else 
+ 	sspr(16,48,16,16,spaceram.x-32,spaceram.y-32, 64, 64)
+ end
+
 end
 
 function drawbg()
