@@ -11,6 +11,8 @@ level = 1
 death_timer = 0 
 level_over_timer = 0
 level_over = false
+event_marker = 1
+
 
 p = {
 	accel = {x = .015, y = 0},
@@ -43,6 +45,7 @@ spaceram = {
 
 zones = {}
 preview_events = {}
+active_events = {}
 
 level_1 = {
 	-- layout = {0,0,1,2,2,2,2,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1}
@@ -53,18 +56,19 @@ gravity = .04
 
 function _init()
 
-	create_zone(-1,5,10,64,10)
+	
+	
 	create_zone(-1,6,10,64,10)
 	create_zone(-1,7,10,64,10)
 
-	create_zone(-1,5,10,32,10)
-	create_zone(-1,8,10,96,10)
+	
+	create_zone(1,8,10,96,10)
 	create_zone(-1,10,10,32,10)
-	create_zone(-1,14,10,96,10)
-	create_zone(-1,17,10,32,10)
+	create_zone(1,14,10,96,10)
+	-- create_zone(-1,17,10,32,10)
 	create_zone(-1,18,10,96,10)
-	create_zone(-1,20,10,32,10)
-	create_zone(-1,5,10,96,10)
+	-- create_zone(-1,20,10,32,10)
+	-- create_zone(-1,5,10,96,10)
 end
 
 function _update()
@@ -82,9 +86,10 @@ function _update()
 		updatespaceram()
 		updatecamera()
 		check_for_preview_events()
+		foreach(active_events,update_active_events)
 		check_for_death()
 		check_for_end_of_level()
-
+		--log = #active_events
 		--log = p.vel.x
 	
 	elseif state == 3 then
@@ -104,6 +109,7 @@ function _draw()
 		foreach(zones, draw_zone)
 		drawplayer()
 		drawspaceram()
+		foreach(active_events, draw_event)
 		-- 	cursor(p.x+10,p.y)
 		-- color(6)
 		-- print(sget(p.x,p.y))
@@ -132,8 +138,37 @@ function drawplayer()
 end
 
 function check_for_preview_events()
-	-- take the first element of the preview events array
-	--local xvaltofireat = preview_events[1].screen * 128 + preview_events[1].x - 128
+	-- take the first element of the preview events array 
+	if preview_events[event_marker] then
+		local xvaltofireat = preview_events[event_marker].screen * 128 + preview_events[event_marker].x - 256
+		if (p.x > xvaltofireat) then
+			create_preview_event(preview_events[event_marker].polarity,preview_events[event_marker].y)
+			event_marker += 1
+			--log = event_marker
+		end
+	end
+	
+
+end
+
+function create_preview_event(polarity, y)
+	local event = {}
+	event.timer = 0
+	event.y = y
+	event.polarity = polarity
+	event.x = 120
+	event.width = 10
+	-- make width optional?
+	add (active_events, event)
+end
+
+function update_active_events(event)
+	--log = "updating"
+	event.timer += 1
+	if event.timer >= 16 then
+		event.timer = 16
+	end
+	
 end
 
 function check_for_end_of_level()
@@ -196,7 +231,7 @@ function reset_variables()
 	--spaceram.accel = {x = .015, y = 0}
 	spaceram.timer = 0
 	--spaceram.maxvel = {x =2.5, y = 0}
-
+	event_marker = 1
 	updatecamera()
 end
 
@@ -232,7 +267,7 @@ function updatespaceram()
 	if (p.x - spaceram.x > 200) then -- change this to a var that changes by level
 		spaceram.x = p.x - 200
 	end
-	log = p.x - spaceram.x
+	--log = p.x - spaceram.x
 	spaceram.timer = (spaceram.timer + 1) % 60
 end
 
@@ -348,15 +383,38 @@ function create_zone(polarity, screen, x, y, width)
 	zone.width = width
 	add (zones, zone)
 	-- create a preview event for this
-	add (preview_events, preview_event)
+	add (preview_events, zone)
 	return zone
 
 end
 
 function draw_zone(zone)
-	circfill(zone.screen*128 + zone.x, zone.y, zone.width, 6)
+	local col = 3
+	if zone.polarity == 1 then
+		col = 3
+	else 
+		col = 8
+	end
+	circfill(zone.screen*128 + zone.x, zone.y, zone.width, col)
 
 end
+
+function draw_event(event)
+	-- log = "happening"
+	local col = 3
+
+	if event.polarity == 1 then
+		col = 3 
+	else
+		col = 8
+	end
+	--log = event.timer
+	if event.timer % 5 == 0 then 
+		circfill(p.x + 60, event.y, event.width, col)
+	end
+
+end
+
 function sqr(x) return x*x end
 
 function get_distance(ax,ay,bx,by)
