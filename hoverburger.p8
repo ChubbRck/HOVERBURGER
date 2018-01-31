@@ -12,6 +12,7 @@ death_timer = 0
 level_over_timer = 0
 level_over = false
 event_marker = 1
+grav_marker = 1
 
 
 p = {
@@ -33,7 +34,7 @@ p = {
 	boosts = 3,
 	rot = 20,
 	flip_var = 1,
-	timer = 1
+	timer = 1,
 }
 
 spaceram = {
@@ -52,10 +53,14 @@ active_events = {}
 
 level_1 = {
 	-- layout = {0,0,1,2,2,2,2,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1}
-	layout = {0,0,1,2,2,2,2,3,4,4,5,4,4,3,3,4,5,5,6,5,4,5,4,4,4,5,7,5     }
+	layout = {0,0,1,2,2,2,2,3,4,4,5,4,4,3,3,4,5,5,6,5,4,5,4,4,4,5,7,5     },
+	grav_points = {
+		{screen=5, polarity=-1}	
+	}
 }
 
-gravity = .04
+gravity_factor = .04
+gravity = gravity_factor
 
 function _init()
 
@@ -75,7 +80,7 @@ function _init()
 end
 
 function _update()
-	
+	log = #level_1.layout
 	if state == 1 then
 	-- title screen
 		if btn(2) then
@@ -87,9 +92,11 @@ function _update()
 		checkinput()
 		updateplayer()
 		check_zones()
+
 		updatespaceram()
 		updatecamera()
 		check_for_preview_events()
+		check_for_grav_changes()
 		foreach(active_events,update_active_events)
 		check_for_death()
 		check_for_end_of_level()
@@ -180,8 +187,28 @@ function check_for_preview_events()
 			--log = event_marker
 		end
 	end
-	
+end
 
+function change_grav(polarity)
+
+	if (polarity == 1) then
+		gravity = gravity_factor
+	elseif (polarity == -1) then
+		gravity = gravity_factor * -1
+
+	end
+
+end
+
+function check_for_grav_changes()
+	-- take the first element of the preview events array 
+	if level_1.grav_points[grav_marker] then
+		local xvaltofireat = level_1.grav_points[grav_marker].screen * 128
+		if (p.x > xvaltofireat) then
+			change_grav(level_1.grav_points[grav_marker].polarity)
+			grav_marker += 1
+		end
+	end
 end
 
 function create_preview_event(polarity, y)
@@ -265,6 +292,7 @@ function reset_variables()
 	spaceram.timer = 0
 	--spaceram.maxvel = {x =2.5, y = 0}
 	event_marker = 1
+	gravity = gravity_factor
 	updatecamera()
 end
 
