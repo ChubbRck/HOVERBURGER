@@ -13,6 +13,8 @@ level_over_timer = 0
 level_over = false
 event_marker = 1
 grav_marker = 1
+warning_active = false
+warning_timer = 0
 
 
 p = {
@@ -55,7 +57,8 @@ level_1 = {
 	-- layout = {0,0,1,2,2,2,2,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1}
 	layout = {0,0,1,2,2,2,2,3,4,4,5,4,4,3,3,4,5,5,6,5,4,5,4,4,4,5,7,5     },
 	grav_points = {
-		{screen=5, polarity=-1}	
+		{screen=5, polarity=-1},
+		{screen=8, polarity=1}		
 	}
 }
 
@@ -80,7 +83,7 @@ function _init()
 end
 
 function _update()
-	log = #level_1.layout
+	--log = #level_1.layout
 	if state == 1 then
 	-- title screen
 		if btn(2) then
@@ -96,6 +99,7 @@ function _update()
 		updatespaceram()
 		updatecamera()
 		check_for_preview_events()
+		run_warning()
 		check_for_grav_changes()
 		foreach(active_events,update_active_events)
 		check_for_death()
@@ -116,11 +120,15 @@ function _draw()
 
 	if state == 2 then
 		cls()
+		foreach(level_1.grav_points, draw_grav_point)
 		drawbg()
+		
 		foreach(zones, draw_zone)
 		drawplayer()
 		drawspaceram()
 		foreach(active_events, draw_event)
+		draw_warning()
+		
 		-- 	cursor(p.x+10,p.y)
 		-- color(6)
 		-- print(sget(p.x,p.y))
@@ -195,7 +203,6 @@ function change_grav(polarity)
 		gravity = gravity_factor
 	elseif (polarity == -1) then
 		gravity = gravity_factor * -1
-
 	end
 
 end
@@ -206,11 +213,59 @@ function check_for_grav_changes()
 		local xvaltofireat = level_1.grav_points[grav_marker].screen * 128
 		if (p.x > xvaltofireat) then
 			change_grav(level_1.grav_points[grav_marker].polarity)
+			activate_warning(level_1.grav_points[grav_marker].polarity)
 			grav_marker += 1
 		end
 	end
 end
 
+function activate_warning(polarity)
+	warning_timer = 0
+	warning_active = true
+
+end
+
+function run_warning()
+	if warning_active then
+		warning_timer += 1
+	end
+
+	if warning_timer >= 60 then
+		warning_active = false
+	end
+end
+
+function hcenter(s)
+  -- screen center minus the
+  -- string length times the 
+  -- pixels in a char's width,
+  -- cut in half
+  return 64-#s*2
+end
+ 
+function vcenter(s)
+  -- screen center minus the
+  -- string height in pixels,
+  -- cut in half
+  return 61
+end
+ 
+
+ 
+
+function draw_warning()
+	if (warning_active) then
+		if (gravity > 0) then 
+			grav_string = "warning - normal gravity zone!"
+		else 
+			grav_string = "warning - antigravity zone!"
+		end
+		cursor (p.x - #grav_string*2, 20)
+		rectfill(p.x - 64, 20, p.x+64,24,8)
+		color(7)
+		print(grav_string)
+	end
+end
 function create_preview_event(polarity, y)
 	local event = {}
 	event.timer = 0
@@ -292,6 +347,7 @@ function reset_variables()
 	spaceram.timer = 0
 	--spaceram.maxvel = {x =2.5, y = 0}
 	event_marker = 1
+	grav_marker = 1
 	gravity = gravity_factor
 	updatecamera()
 end
@@ -453,6 +509,12 @@ function create_zone(polarity, screen, x, y, width)
 	add (preview_events, zone)
 	return zone
 
+end
+
+function draw_grav_point(grav_point)
+	local xval = grav_point.screen * 128
+	
+	line (xval,0,xval,128, 2)
 end
 
 function draw_zone(zone)
