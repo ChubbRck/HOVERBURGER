@@ -83,7 +83,7 @@ function _init()
 end
 
 function _update()
-	--log = #level_1.layout
+	log = p.fuel
 	if state == 1 then
 	-- title screen
 		if btn(2) then
@@ -128,6 +128,7 @@ function _draw()
 		drawspaceram()
 		foreach(active_events, draw_event)
 		draw_warning()
+		draw_fuel_meter()
 		
 		-- 	cursor(p.x+10,p.y)
 		-- color(6)
@@ -251,7 +252,21 @@ function vcenter(s)
 end
  
 
- 
+function draw_fuel_meter()
+	-- rectfill(p.x - 64, 123, p.x + 64, 128, 2)
+	
+	
+	local fuel_left = p.fuel / 100
+
+	local fuel_disp = ((fuel_left * 128) - 64)
+	rectfill(p.x - 64, 123, p.x + 64, 128, 0)
+	rect(p.x - 64 + 16, 123, p.x + 63, 127, 3)
+	rectfill(p.x - 64 + 16, 123, p.x + fuel_disp, 128, 3)
+	color(7)
+	print("fuel",p.x - 64, 123)
+
+
+end
 
 function draw_warning()
 	if (warning_active) then
@@ -328,6 +343,7 @@ function reset_variables()
 	p.y = 64
 	p.baseaccel = .1 -- was .1
 	p.vel = {x = 0, y = 0}
+	p.accel = {x = .015, y = 0}
 	p.bounce = 0.4 
 	p.score = 0
 	-- p.maxvel = {x = 4, y = 1} -- was 2
@@ -355,21 +371,28 @@ end
 function checkinput()
 	
 	if btn(2) then
-		p.accel.y = -.1
-		p.flip_var = 1
-		p.thruston = true
+		if (p.fuel > 0) then
+			p.accel.y = -.1
+			p.flip_var = 1
+			p.thruston = true
+			p.fuel -= p.fueldepleterate*.5
+		end
 	elseif btn(3) then
-		p.accel.y = .1
-	 	p.flip_var = 2
-	 	p.thruston = true
+		if (p.fuel > 0) then
+			p.accel.y = .1
+	 		p.flip_var = 2
+	 		p.thruston = true
+	 		p.fuel -= p.fueldepleterate*.5
+	 	end
 	else
 		p.accel.y = 0
 		p.thruston = false
 	end
 	
 	if btnp(4) then
-		if p.boosts > 0 then
+		if p.boosts > 0 and p.fuel > 0 then
 			p.vel.x += 1
+			p.fuel -= p.fueldepleterate * 2
 			p.boosts -= 1
 			--play sfx
 		else
@@ -397,6 +420,14 @@ function updateplayer()
 	p.timer += 1
 	p.timer = p.timer % 1200
 	if not p.dead then
+
+		p.fuel -= p.fueldepleterate
+
+		if (p.fuel <= 0) then
+			p.accel.x = 0
+			p.vel.x *= .999
+		end
+
 		p.vel.y += p.accel.y
 		p.vel.x += p.accel.x
 		
