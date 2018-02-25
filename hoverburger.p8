@@ -37,6 +37,8 @@ p = {
 	rot = 20,
 	flip_var = 1,
 	timer = 1,
+	hurt = false,
+	blink_frame = 20
 }
 
 spaceram = {
@@ -97,6 +99,7 @@ function _update()
 		check_zones()
 
 		updatespaceram()
+		managehealth()
 		updatecamera()
 		check_for_preview_events()
 		run_warning()
@@ -175,12 +178,23 @@ function drawplayer()
     		local col
     		-- log = p.timer
     		if p.timer % 2 == 0 then
+    	
     			col=sget(ox+4+16,oy+4+offset_val)
     		else
+    	
     			 col=sget(ox+4,oy+4+offset_val)
     		end
     		if col>0 then 
+    			if p.timer % p.blink_frame == 0 and p.hurt then
+    			
+    				pal (15,8)
+    				pal (10,8)
+    				pal (3,8)
+    				pal (4,8)
+    				pal (7,8)
+    			end
       			pset(p.x+4+x,p.y+y+4,col)
+      			pal()
 	 		end
 	 	end end
 	end
@@ -264,7 +278,6 @@ function draw_fuel_meter()
 	rectfill(p.x - 64 + 16, 123, p.x + fuel_disp, 128, 3)
 	color(7)
 	print("fuel",p.x - 64, 123)
-
 
 end
 
@@ -354,6 +367,8 @@ function reset_variables()
 	p.dead = false
 	p.atgoal = false
 	p.boosts = 3
+	p.blink_frame = 20
+	p.hurt = false
 	-- reset space ram vars
 	spaceram.x = -80
 	spaceram.y = 64
@@ -414,6 +429,22 @@ function updatespaceram()
 	end
 	--log = p.x - spaceram.x
 	spaceram.timer = (spaceram.timer + 1) % 60
+end
+
+function managehealth()
+	if p.health < 35 then
+		p.hurt = true
+		p.blink_frame = 20
+	end
+
+	if p.health < 25 then
+		p.blink_frame = 10
+	end
+
+	if p.health < 15 then
+		p.blink_frame = 5
+	end
+
 end
 
 function updateplayer()
