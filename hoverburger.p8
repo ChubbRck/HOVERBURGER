@@ -18,7 +18,7 @@ warning_timer = 0
 
 
 p = {
-	accel = {x = .015, y = 0},
+	accel = {x = 0, y = 0},
 	x = 64, 
 	y = 64,
 	lives = 3,
@@ -26,7 +26,7 @@ p = {
 	vel = {x = 0, y = 0},
 	bounce = 0.4 ,
 	score = 0,
-	maxvel = {x = 4, y = 1}, -- was 2
+	maxvel = {x = 6, y = 1}, -- was 4
 	rot = 0,
 	fuel = 100,
 	fueldepleterate = .03,
@@ -48,7 +48,7 @@ spaceram = {
 	vel = {x = 1, y = 0},
 	accel = {x = .010, y = 0},
 	timer = 0,
-	maxvel = {x =3, y = 0}
+	maxvel = {x =4, y = 0}
 }
 
 zones = {}
@@ -85,7 +85,7 @@ function _init()
 end
 
 function _update()
-	log = p.health
+	log = p.vel.x
 	if state == 1 then
 	-- title screen
 		if btn(2) then
@@ -384,7 +384,16 @@ function reset_variables()
 end
 
 function checkinput()
-	
+	if btn(1) then
+		if (p.fuel > 0) then
+			p.thruston = true
+			p.fuel -= p.fueldepleterate*.5
+			p.accel.x = .012
+		end
+	else
+		p.accel.x = 0
+		p.vel.x *= .999
+	end
 	if btn(2) then
 		if (p.fuel > 0) then
 			p.accel.y = -.1
@@ -452,7 +461,7 @@ function updateplayer()
 	p.timer = p.timer % 1200
 	if not p.dead then
 
-		p.fuel -= p.fueldepleterate
+		--p.fuel -= p.fueldepleterate
 
 		if (p.fuel <= 0) then
 			p.accel.x = 0
