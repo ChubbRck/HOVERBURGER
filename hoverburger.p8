@@ -83,7 +83,7 @@ function _init()
 end
 
 function _update()
-	log = p.fuel
+	log = p.health
 	if state == 1 then
 	-- title screen
 		if btn(2) then
@@ -478,16 +478,24 @@ function checkcollisions()
  	if fget(maptile_bot) == 1 and p.y > 64 then
  		p.vel.y = -2
  		p.vel.x *= .8
+ 		local vel_mag = sqrt(p.vel.x*p.vel.x + p.vel.y*p.vel.y)
+
+ 		-- apply damage based on magnitude of velocity at time of collision
+ 		p.health -= vel_mag * 2
  	end
  
  	if fget(maptile_top) == 1 and p.y < 64 then
 		p.vel.y = 2
 		p.vel.x *= .8
+		local vel_mag = sqrt(p.vel.x*p.vel.x + p.vel.y*p.vel.y)
+
+		-- apply damage based on magnitude of velocity at time of collision
+		p.health -= vel_mag * 2
  	end
 
  	-- check for collision with space ram
  	local dist = p.x - spaceram.x
- 	if dist <= 30 then
+ 	if dist <= 30 or p.health <= 0 then
  		p.dead = true
  		p.lives -= 1
  	end
