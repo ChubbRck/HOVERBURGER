@@ -28,7 +28,8 @@ p = {
 	score = 0,
 	maxvel = {x = 6, y = 1}, -- was 4
 	rot = 0,
-	fuel = 100,
+	fuel = 35,
+	fuelmax = 35,
 	fueldepleterate = .03,
 	health = 50,
 	dead = false,
@@ -42,7 +43,7 @@ p = {
 }
 
 spaceram = {
-	x = -80,
+	x = -120,
 	y = 64,
 	timer = 0,
 	vel = {x = 1, y = 0},
@@ -57,7 +58,7 @@ active_events = {}
 
 level_1 = {
 	-- layout = {0,0,1,2,2,2,2,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1}
-	layout = {0,0,1,2,2,2,2,3,4,4,5,4,4,3,3,4,5,5,6,5,4,5,4,4,4,5,7,5     },
+	layout = {0,0,1,2,2,2,2,3,4,4,5,4,4,3,3,4,5,5,6,5,4,5,4,4,4,5,7,5,7,7,4,5,6,5,5,4,7,6,7,6,5,4,6,7,7,5,4,6,7,4,3,7,6,5,6,6,5,4,5,4,4,4,5,7,5,7,7,4,5,6,5,5,4,7,6,7,6,5,4,6,7,7,5,4,6,7,4,3,7,6,5,6,5,6,5,5,4,7,6,7,6,5,4,6,7,7,5,4,6,7,4,3,7,6,5,6,6,4,4,6,5,7,5,4,3,6,7},
 	grav_points = {
 		{screen=5, polarity=-1},
 		{screen=8, polarity=1}		
@@ -70,7 +71,11 @@ gravity = gravity_factor
 function _init()
 
 	
+	create_zone(3,4,23,64,10)
+	create_zone(3,40,23,64,10)
+	create_zone(3,90,23,64,10)
 	
+
 	create_zone(-1,6,10,64,10)
 	create_zone(-1,7,10,64,10)
 
@@ -78,6 +83,7 @@ function _init()
 	create_zone(1,8,10,96,10)
 	create_zone(-1,10,10,32,10)
 	create_zone(1,14,10,96,10)
+	create_zone(3,16,23,64,10)
 	-- create_zone(-1,17,10,32,10)
 	create_zone(-1,18,10,96,10)
 	-- create_zone(-1,20,10,32,10)
@@ -85,7 +91,7 @@ function _init()
 end
 
 function _update()
-	log = p.vel.x
+	log = p.fuel
 	if state == 1 then
 	-- title screen
 		if btn(2) then
@@ -270,9 +276,9 @@ function draw_fuel_meter()
 	-- rectfill(p.x - 64, 123, p.x + 64, 128, 2)
 	
 	
-	local fuel_left = p.fuel / 100
+	local fuel_left = p.fuel / p.fuelmax
 
-	local fuel_disp = ((fuel_left * 128) - 64)
+	local fuel_disp = flr(((fuel_left * 128) - 64))
 	rectfill(p.x - 64, 123, p.x + 64, 128, 0)
 	rect(p.x - 64 + 16, 123, p.x + 63, 127, 3)
 	rectfill(p.x - 64 + 16, 123, p.x + fuel_disp, 128, 3)
@@ -361,7 +367,8 @@ function reset_variables()
 	p.score = 0
 	-- p.maxvel = {x = 4, y = 1} -- was 2
 	p.rot = 0
-	p.fuel = 100
+	p.fuel = 35
+	p.fuelmax = 35
 	p.fueldepleterate = .03
 	p.health = 50
 	p.dead = false
@@ -370,7 +377,7 @@ function reset_variables()
 	p.blink_frame = 20
 	p.hurt = false
 	-- reset space ram vars
-	spaceram.x = -80
+	spaceram.x = -120
 	spaceram.y = 64
 	spaceram.timer = 0
 	spaceram.vel = {x = 1, y = 0} -- make level dependent
@@ -600,10 +607,14 @@ function draw_zone(zone)
 	local col = 3
 	if zone.polarity == 1 then
 		col = 3
-	else 
+		circfill(zone.screen*128 + zone.x, zone.y, zone.width, col)
+	elseif zone.polarity == -1 then  
 		col = 8
+		circfill(zone.screen*128 + zone.x, zone.y, zone.width, col)
+	elseif zone.polarity == 3 then
+		spr(13, zone.screen*128 + zone.x, zone.y)
 	end
-	circfill(zone.screen*128 + zone.x, zone.y, zone.width, col)
+	
 
 end
 
@@ -613,13 +624,21 @@ function draw_event(event)
 
 	if event.polarity == 1 then
 		col = 3 
-	else
+		if event.timer % 5 == 0 then 
+			circfill(p.x + 60, event.y, event.width, col)
+		end
+	elseif event.polarity == -1 then
 		col = 8
+		if event.timer % 5 == 0 then 
+			circfill(p.x + 60, event.y, event.width, col)
+		end
+	elseif event.polarity == 3 then
+		if event.timer % 5 == 0 then 
+			spr(13, p.x + 50, event.y)
+		end
 	end
 	--log = event.timer
-	if event.timer % 5 == 0 then 
-		circfill(p.x + 60, event.y, event.width, col)
-	end
+	
 
 end
 
@@ -640,6 +659,10 @@ function check_zones()
 
 			elseif zone.polarity == -1 then
 				p.vel.x *= .9
+			elseif zone.polarity == 3 then
+				p.fuel += 5
+				del(zones, zone)
+				-- delete fuel zone
 			end
 		end
 	end
